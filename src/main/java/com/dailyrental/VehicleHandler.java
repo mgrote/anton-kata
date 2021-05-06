@@ -22,32 +22,33 @@ public class VehicleHandler {
     private RentalService rentalService;
 
     /**
-     * There are two types of rental with different rules:
+     * There are two types of rental use cases with different rules:
      * RentalType.GARAGE_RENTAL for business users
      * RentalType.PRIVAT_RENTAL for private users
      * The following rules apply:
      * GARAGE_RENTAL:
-     * In case of premature checkout greater than 2 hours the rental end will reduced by 2 hours (2minusRule).
-     * In case of premature checkout greater than 4 hours the rental end will reduced by 4 hours (4minusRule).
-     * In case of late checkout greater than 2 hours the rental end will extend by 2 hours (2plusRule).
-     * In case of late checkout greater than 4 hours the rental end will extend by 4 hours (4plusRule).
-     * In case of a favorite customer no changes will apply.
+     * In case the checkout happens more than 2 hours early the planned rental end time will be exactly 2 hours earlier (2minusRule).
+     * In case the checkout happens more than 4 hours early the planned rental end time will be exactly 4 hours earlier (4minusRule).
+     * In case the checkout happens more than 2 hours later than planned, the planned rental end time will be exactly 2 hours later (2plusRule).
+     * In case the checkout happens more than 4 hours later than planned, the planned rental end time will be exactly 4 hours later (4plusRule).
+     * In case the customer is marked as a favorite, none of the rules above will apply.
      * PRIVATE_RENTAL:
-     * In case of premature checkout the rental end will reduced by the difference between checkout and expected start in hours.
-     * In case of a favorite customer no changes will apply.
+     * In case the checkout happens early, the rental end will be set to an earlier time according
+     * to the difference between checkout and expected start time rounded up to full hours.
+     * In case the customer is marked as a favorite, the rule above does not apply.
      *
-     * @param rental Rental with information about timeranges and customer
+     * @param rental       Rental with information about time ranges and customer
      * @param checkoutDate the real vehicle checkout time
      */
     public void checkout(Rental rental, LocalDateTime checkoutDate) {
         var movement = new VehicleMovement();
         movement.setCheckout(checkoutDate);
         rental.setMovement(movement);
-        if(rental.getRentalType() == RentalType.GARAGE_RENTAL
+        if (rental.getRentalType() == RentalType.GARAGE_RENTAL
                 && rental.getStart().isAfter(checkoutDate.plusHours(2))) {
             rental.setEnd(rental.getEnd().minusHours(2));
         } else if (rental.getRentalType() == RentalType.PRIVAT_RENTAL
-            && rental.getStart().isAfter(checkoutDate)) {
+                && rental.getStart().isAfter(checkoutDate)) {
             rental.setEnd(rental.getEnd().minusHours((long) rental.getStart().getHour() - checkoutDate.getHour()));
         }
         rentalService.updateRental(rental);

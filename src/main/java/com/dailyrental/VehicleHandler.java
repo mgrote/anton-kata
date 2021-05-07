@@ -7,11 +7,13 @@
 package com.dailyrental;
 
 import com.dailyrental.domain.Rental;
-import com.dailyrental.domain.RentalType;
 import com.dailyrental.domain.VehicleMovement;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static com.dailyrental.rule.CheckoutRule.*;
+import static com.dailyrental.rule.RentalRule.isPrivateRental;
 
 /**
  * @author Michael Grote, GROTEMI (415)
@@ -44,14 +46,26 @@ public class VehicleHandler {
         var movement = new VehicleMovement();
         movement.setCheckout(checkoutDate);
         rental.setMovement(movement);
-        if (rental.getRentalType() == RentalType.GARAGE_RENTAL
-                && rental.getStart().isAfter(checkoutDate.plusHours(2))) {
-            rental.setEnd(rental.getEnd().minusHours(2));
-        } else if (rental.getRentalType() == RentalType.PRIVAT_RENTAL
-                && rental.getStart().isAfter(checkoutDate)) {
-            rental.setEnd(rental.getEnd().minusHours((long) rental.getStart().getHour() - checkoutDate.getHour()));
+        if(isEarly.and(isNotFavoriteCustomer).test(rental, checkoutDate)) {
+            applyCheckoutRules(rental, checkoutDate);
         }
         rentalService.updateRental(rental);
+    }
+
+    private void applyCheckoutRules(Rental rental, LocalDateTime checkoutDate) {
+        if(isPrivateRental.test(rental)) {
+            rental.setEnd(rental.getEnd().minusHours((long) rental.getStart().getHour() - checkoutDate.getHour()));
+        } else {
+            applyGarageCheckoutRules(rental, checkoutDate);
+        }
+    }
+
+    private void applyGarageCheckoutRules(Rental rental, LocalDateTime checkoutDate) {
+        if(fourMinusRuleApplies.test(rental, checkoutDate)) {
+            rental.setEnd(rental.getEnd().minusHours(4));
+        } else if (twoMinusRuleApplies.test(rental, checkoutDate)) {
+            rental.setEnd(rental.getEnd().minusHours(2));
+        }
     }
 
     public void checkin(Rental rental) {

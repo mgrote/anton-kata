@@ -7,7 +7,6 @@
 package com.dailyrental;
 
 import com.dailyrental.domain.Rental;
-import com.dailyrental.domain.RentalType;
 import com.dailyrental.domain.VehicleMovement;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +43,20 @@ public class VehicleHandler {
         var movement = new VehicleMovement();
         movement.setCheckout(checkoutDate);
         rental.setMovement(movement);
-        if (rental.getRentalType() == RentalType.GARAGE_RENTAL
-                && rental.getStart().isAfter(checkoutDate.plusHours(2))) {
-            rental.setEnd(rental.getEnd().minusHours(2));
-        } else if (rental.getRentalType() == RentalType.PRIVAT_RENTAL
-                && rental.getStart().isAfter(checkoutDate)) {
-            rental.setEnd(rental.getEnd().minusHours((long) rental.getStart().getHour() - checkoutDate.getHour()));
+        if(isEarly.and(notFavoriteCustomer) ... ) {
+            if(privateRental) {
+                applyPrivateRules
+            } else {
+                applyGarageRules
+            }
         }
+//        if (rental.getRentalType() == RentalType.GARAGE_RENTAL
+//                && rental.getStart().isAfter(checkoutDate.plusHours(2))) {
+//            rental.setEnd(rental.getEnd().minusHours(2));
+//        } else if (rental.getRentalType() == RentalType.PRIVAT_RENTAL
+//                && rental.getStart().isAfter(checkoutDate)) {
+//            rental.setEnd(rental.getEnd().minusHours((long) rental.getStart().getHour() - checkoutDate.getHour()));
+//        }
         rentalService.updateRental(rental);
     }
 

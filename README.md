@@ -1,1 +1,1 @@
-# anton-kata
+kata
